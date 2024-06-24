@@ -16,9 +16,13 @@ const addItemButton = document.getElementById('add-item');
 const settingsButton = document.getElementById('settings-button');
 const settingsBackButton = document.getElementById('settings-back-button');
 const saveSettingsButton = document.getElementById('save-settings-button');
+const currencyList = document.getElementById('currency-list');
+const currencySearch = document.getElementById('currency-search');
 
 let user = null;
 let invoices = [];
+const currencyApiUrl = 'https://openexchangerates.org/api/currencies.json';
+const currencyApiKey = 'YOUR_API_KEY_HERE'; // Replace with your Open Exchange Rates API key
 
 // Automatic user authorization
 function authorizeUser() {
@@ -37,6 +41,7 @@ function authorizeUser() {
             loadInvoices();
             updateIncomeSummary();
             Telegram.WebApp.MainButton.hide();
+            loadCurrencies();
         } else {
             alert('Authorization failed. Please try again.');
         }
@@ -50,6 +55,73 @@ Telegram.WebApp.onEvent('mainButtonClicked', saveInvoice);
 
 // Automatically try to authorize when the page loads
 window.addEventListener('load', authorizeUser);
+
+// Load currencies from API and populate the dropdown
+function loadCurrencies() {
+    fetch(`${currencyApiUrl}?app_id=${currencyApiKey}`)
+        .then(response => response.json())
+        .then(data => {
+            const currencies = Object.entries(data).map(([code, name]) => ({
+                code,
+                name,
+                symbol: getCurrencySymbol(code)
+            }));
+            displayCurrencies(currencies);
+        })
+        .catch(error => console.error('Error loading currencies:', error));
+}
+
+// Get currency symbol (this can be improved with a more complete mapping)
+function getCurrencySymbol(code) {
+    const symbols = {
+        USD: '$',
+        CAD: 'CA$',
+        EUR: '€'
+        // Add more currency symbols as needed
+    };
+    return symbols[code] || code;
+}
+
+// Display the list of currencies
+function displayCurrencies(currencies) {
+    currencyList.innerHTML = '';
+    currencies.forEach(currency => {
+        const li = document.createElement('li');
+        li.classList.add('currency-item');
+        li.dataset.code = currency.code;
+        li.innerHTML = `
+            <span class="currency-symbol">${currency.symbol}</span>
+            <span class="currency-name">${currency.name} (${currency.code})</span>
+        `;
+        li.addEventListener('click', () => selectCurrency(currency.code));
+        currencyList.appendChild(li);
+    });
+}
+
+// Select currency
+function selectCurrency(code) {
+    const selectedCurrency = document.querySelector('.currency-item.selected');
+    if (selectedCurrency) {
+        selectedCurrency.classList.remove('selected');
+    }
+    const newSelectedCurrency = document.querySelector(`.currency-item[data-code="${code}"]`);
+    if (newSelectedCurrency) {
+        newSelectedCurrency.classList.add('selected');
+    }
+}
+
+// Filter currencies
+currencySearch.addEventListener('input', () => {
+    const query = currencySearch.value.toLowerCase();
+    document.querySelectorAll('.currency-item').forEach(item => {
+        const name = item.querySelector('.currency-name').textContent.toLowerCase();
+        if (name.includes(query)) {
+            item.classList.remove('hidden');
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+});
 
 // Create new invoice
 createInvoiceButton.addEventListener('click', () => {
@@ -92,7 +164,8 @@ settingsBackButton.addEventListener('click', () => {
 // Save settings
 saveSettingsButton.addEventListener('click', () => {
     const language = document.getElementById('language').value;
-    const defaultCurrency = document.getElementById('default-currency').value;
+    const selectedCurrencyItem = document.querySelector('.currency-item.selected');
+    const defaultCurrency = selectedCurrencyItem ? selectedCurrencyItem.dataset.code : 'USD';
     const showBalances = document.getElementById('show-balances').checked;
     
     // Save settings to localStorage or send to server

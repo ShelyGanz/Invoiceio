@@ -147,12 +147,11 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="currency">Default Currency</label>
-                <select id="default-currency">
-                    <option value="CAD">CAD ($)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                </select>
+                <label for="default-currency">Default Currency</label>
+                <input type="text" id="currency-search" placeholder="Search currencies">
+                <ul id="currency-list" class="currency-list">
+                    <!-- Currency options will be populated here -->
+                </ul>
             </div>
             <div class="form-group">
                 <label for="show-balances">Show Balances</label>
