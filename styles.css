@@ -1,232 +1,159 @@
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: Arial, sans-serif;
+    background-color: #1d1d1d;
+    color: #ffffff;
     margin: 0;
     padding: 0;
-    background-color: var(--tg-theme-bg-color, #ffffff);
-    color: var(--tg-theme-text-color, #000000);
-    font-size: 14px;
-    line-height: 1.5;
 }
 
 .container {
-    max-width: 100%;
-    padding: 10px;
-    box-sizing: border-box;
-}
-
-h1 {
-    font-size: 20px;
-    margin-bottom: 15px;
-}
-
-h2 {
-    font-size: 18px;
-    margin-top: 20px;
-    margin-bottom: 10px;
+    padding: 20px;
 }
 
 .hidden {
     display: none;
 }
 
-.button {
-    background-color: var(--tg-theme-button-color, #3390ec);
-    color: var(--tg-theme-button-text-color, #ffffff);
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    margin: 5px 0;
-    width: 100%;
-    text-align: center;
-}
-
-.status-filter {
+.header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
-}
-
-.status-filter button {
-    flex: 1;
-    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-    border: none;
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 12px;
-    margin: 0 2px;
-}
-
-.status-filter button.active {
-    background-color: var(--tg-theme-button-color, #3390ec);
-    color: var(--tg-theme-button-text-color, #ffffff);
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-}
-
-th, td {
-    text-align: left;
-    padding: 6px;
-    border-bottom: 1px solid var(--tg-theme-hint-color, #cccccc);
-}
-
-th {
-    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-    font-weight: bold;
-}
-
-.status-indicator {
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-size: 10px;
-}
-
-.invoice-form {
-    background-color: var(--tg-theme-bg-color, #ffffff);
+    align-items: center;
     padding: 10px;
-    border-radius: 8px;
-}
-
-.form-group {
-    margin-bottom: 12px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 4px;
-    font-weight: bold;
-    font-size: 12px;
-}
-
-.form-group input, .form-group textarea, .form-group select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    box-sizing: border-box;
-}
-
-.logo-upload {
-    border: 2px dashed #ddd;
-    padding: 10px;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 8px;
-}
-
-.items-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-}
-
-.items-table th, .items-table td {
-    border: 1px solid #ddd;
-    padding: 6px;
-    text-align: left;
-}
-
-.items-table th {
-    background-color: #f2f2f2;
-}
-
-.add-item-btn, .add-discount-btn {
-    background-color: var(--tg-theme-button-color, #3390ec);
-    color: var(--tg-theme-button-text-color, #ffffff);
-    border: none;
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 12px;
-    cursor: pointer;
-    margin-top: 8px;
-    width: 100%;
-}
-
-.income-summary {
-    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-    padding: 15px;
+    background-color: #2d2d2d;
     border-radius: 8px;
     margin-bottom: 20px;
 }
 
-.income-summary h3 {
-    margin-top: 0;
+.profile {
+    display: flex;
+    align-items: center;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    background-color: #4caf50;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+.name {
     font-size: 16px;
+}
+
+.settings {
+    cursor: pointer;
+}
+
+.summary {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 .income-value {
     font-size: 24px;
     font-weight: bold;
-    color: var(--tg-theme-button-color, #3390ec);
 }
 
-.back-button {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: none;
+.actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
     border: none;
-    font-size: 24px;
+    border-radius: 8px;
     cursor: pointer;
-    color: var(--tg-theme-button-color, #3390ec);
 }
 
-#invoice-details, #invoice-preview {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--tg-theme-bg-color, #ffffff);
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
+.button.delete-all {
+    background-color: #f44336;
 }
 
-.back-button {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: var(--tg-theme-button-color, #3390ec);
-}
-
-.preview-toggle {
+.status-filter {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
 }
 
-.preview-toggle button {
-    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+.status-filter button {
+    background-color: #2d2d2d;
+    color: white;
+    padding: 10px 20px;
     border: none;
-    padding: 8px 16px;
-    margin: 0 5px;
     border-radius: 8px;
     cursor: pointer;
+    margin: 0 5px;
 }
 
-.preview-toggle button.active {
-    background-color: var(--tg-theme-button-color, #3390ec);
-    color: var(--tg-theme-button-text-color, #ffffff);
+.status-filter button.active {
+    background-color: #4caf50;
 }
 
-.preview-container {
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #3d3d3d;
+}
+
+.invoice-form {
+    background-color: #2d2d2d;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input, .form-group textarea, .form-group select {
+    width: calc(100% - 22px);
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: #3d3d3d;
+    color: white;
+}
+
+.logo-upload {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
 }
 
-#preview-image {
-    max-width: 100%;
-    height: auto;
-    border: 1px solid var(--tg-theme-hint-color, #cccccc);
+.logo-upload #logo-upload-area {
+    cursor: pointer;
+    text-align: center;
+    background-color: #3d3d3d;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.add-item-btn, .add-discount-btn {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 20px;
 }
