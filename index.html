@@ -245,6 +245,7 @@
         }
 
         function renderInvoices(filter = 'all') {
+            mainScreen.classList.remove('hidden');
             invoiceList.innerHTML = '';
             invoices.forEach(invoice => {
                 if (filter === 'all' || invoice.status === filter) {
@@ -281,7 +282,7 @@
                     <ul>
                         ${invoice.items.map(item => `<li>${item.description} - ${item.quantity} x ${item.price} = ${item.amount}</li>`).join('')}
                     </ul>
-                    <button onclick="confirmDeleteInvoice(${invoice.id})" class="delete-button">Delete Invoice</button>
+                    <button onclick="deleteInvoice(${invoice.id})" class="delete-button">Delete Invoice</button>
                     <button onclick="previewInvoice(${invoice.id})" class="preview-button">Preview Invoice</button>
                 `;
                 document.body.appendChild(detailsScreen);
@@ -308,19 +309,26 @@
         }
 
         function deleteInvoice(id) {
-            invoices = invoices.filter(inv => inv.id !== id);
-            saveInvoices();
-            renderInvoices();
-            updateIncomeSummary();
-            closeInvoiceDetails();
-            mainScreen.classList.remove('hidden');
-            
-            // Show a notification that the invoice was deleted
-            Telegram.WebApp.showPopup({
-                title: 'Invoice Deleted',
-                message: 'The invoice has been successfully deleted.',
-                buttons: [{type: 'ok'}]
-            });
+            Telegram.WebApp.showConfirm(
+                "Are you sure you want to delete this invoice?",
+                (confirmed) => {
+                    if (confirmed) {
+                        invoices = invoices.filter(inv => inv.id !== id);
+                        saveInvoices();
+                        renderInvoices();
+                        updateIncomeSummary();
+                        closeInvoiceDetails();
+                        mainScreen.classList.remove('hidden');
+                        
+                        // Show a notification that the invoice was deleted
+                        Telegram.WebApp.showPopup({
+                            title: 'Invoice Deleted',
+                            message: 'The invoice has been successfully deleted.',
+                            buttons: [{type: 'ok'}]
+                        });
+                    }
+                }
+            );
         }
 
         function previewInvoice(id) {
