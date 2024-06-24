@@ -4,17 +4,21 @@ Telegram.WebApp.ready();
 const loadingScreen = document.getElementById('loading-screen');
 const mainScreen = document.getElementById('main-screen');
 const invoiceForm = document.getElementById('invoice-form');
+const invoiceListScreen = document.getElementById('invoice-list-screen');
 const settingsPanel = document.getElementById('settings-panel');
+const invoiceDetails = document.getElementById('invoice-details');
 const userInfo = document.getElementById('user-info');
 const createInvoiceButton = document.getElementById('create-invoice-button');
 const deleteAllInvoicesButton = document.getElementById('delete-all-invoices-button');
 const newInvoiceForm = document.getElementById('new-invoice-form');
 const invoiceList = document.getElementById('invoice-list');
+const invoiceSummaryList = document.getElementById('invoice-summary-list');
+const viewAllInvoicesButton = document.getElementById('view-all-invoices-button');
+const noInvoicesMessage = document.getElementById('no-invoices-message');
+const createInvoiceLink = document.getElementById('create-invoice-link');
 const statusFilters = document.querySelectorAll('.status-filter button');
-const backButton = document.getElementById('back-button');
 const addItemButton = document.getElementById('add-item');
 const settingsButton = document.getElementById('settings-button');
-const settingsBackButton = document.getElementById('settings-back-button');
 const saveSettingsButton = document.getElementById('save-settings-button');
 const currencyList = document.getElementById('currency-list');
 const currencySearch = document.getElementById('currency-search');
@@ -124,7 +128,10 @@ currencySearch.addEventListener('input', () => {
 });
 
 // Create new invoice
-createInvoiceButton.addEventListener('click', () => {
+createInvoiceButton.addEventListener('click', showInvoiceForm);
+createInvoiceLink.addEventListener('click', showInvoiceForm);
+
+function showInvoiceForm() {
     mainScreen.classList.add('hidden');
     invoiceForm.classList.remove('hidden');
     document.getElementById('invoice-number').value = invoices.length + 1;
@@ -132,7 +139,9 @@ createInvoiceButton.addEventListener('click', () => {
     document.getElementById('payment-due').valueAsDate = new Date();
     Telegram.WebApp.MainButton.setText('Save Invoice');
     Telegram.WebApp.MainButton.show();
-});
+    Telegram.WebApp.BackButton.show();
+    Telegram.WebApp.BackButton.onClick(closeForm);
+}
 
 // Delete all invoices
 deleteAllInvoicesButton.addEventListener('click', () => {
@@ -153,13 +162,16 @@ deleteAllInvoicesButton.addEventListener('click', () => {
 settingsButton.addEventListener('click', () => {
     mainScreen.classList.add('hidden');
     settingsPanel.classList.remove('hidden');
+    Telegram.WebApp.BackButton.show();
+    Telegram.WebApp.BackButton.onClick(closeSettings);
 });
 
 // Back from settings panel
-settingsBackButton.addEventListener('click', () => {
+function closeSettings() {
     settingsPanel.classList.add('hidden');
     mainScreen.classList.remove('hidden');
-});
+    Telegram.WebApp.BackButton.hide();
+}
 
 // Save settings
 saveSettingsButton.addEventListener('click', () => {
@@ -178,19 +190,13 @@ saveSettingsButton.addEventListener('click', () => {
     
     settingsPanel.classList.add('hidden');
     mainScreen.classList.remove('hidden');
+    Telegram.WebApp.BackButton.hide();
     
     Telegram.WebApp.showPopup({
         title: 'Settings Saved',
         message: 'Your settings have been successfully saved.',
         buttons: [{type: 'ok'}]
     });
-});
-
-// Add event listener for back button
-backButton.addEventListener('click', () => {
-    invoiceForm.classList.add('hidden');
-    mainScreen.classList.remove('hidden');
-    Telegram.WebApp.MainButton.hide();
 });
 
 // Save invoice
@@ -221,6 +227,7 @@ function saveInvoice() {
     mainScreen.classList.remove('hidden');
     newInvoiceForm.reset();
     Telegram.WebApp.MainButton.hide();
+    Telegram.WebApp.BackButton.hide();
     
     // Show popup notification
     Telegram.WebApp.showPopup({
@@ -258,17 +265,54 @@ function renderInvoices(filter = 'all') {
             invoiceList.appendChild(tr);
         }
     });
+    renderRecentInvoices();
     updateIncomeSummary();
 }
+
+function renderRecentInvoices() {
+    invoiceSummaryList.innerHTML = '';
+    if (invoices.length === 0) {
+        noInvoicesMessage.classList.remove('hidden');
+        viewAllInvoicesButton.classList.add('hidden');
+    } else {
+        noInvoicesMessage.classList.add('hidden');
+        viewAllInvoicesButton.classList.remove('hidden');
+        const recentInvoices = invoices.slice(-3).reverse();
+        recentInvoices.forEach(invoice => {
+            const div = document.createElement('div');
+            div.classList.add('invoice-item');
+            div.addEventListener('click', () => viewInvoiceDetails(invoice.id));
+            div.innerHTML = `
+                <div class="invoice-info">
+                    <div class="invoice-amount">${invoice.currency} ${invoice.total}</div>
+                    <div class="invoice-date">${new Date(invoice.date).toLocaleDateString()}</div>
+                </div>
+                <div class="invoice-title">${invoice.title}</div>
+            `;
+            invoiceSummaryList.appendChild(div);
+        });
+    }
+}
+
+viewAllInvoicesButton.addEventListener('click', () => {
+    mainScreen.classList.add('hidden');
+    invoiceListScreen.classList.remove('hidden');
+    Telegram.WebApp.BackButton.show();
+    Telegram.WebApp.BackButton.onClick(() => {
+        invoiceListScreen.classList.add('hidden');
+        mainScreen.classList.remove('hidden');
+        Telegram.WebApp.BackButton.hide();
+    });
+});
 
 function viewInvoiceDetails(id) {
     const invoice = invoices.find(inv => inv.id === id);
     if (invoice) {
         mainScreen.classList.add('hidden');
+        invoiceListScreen.classList.add('hidden');
+        invoiceDetails.classList.remove('hidden');
         const detailsScreen = document.createElement('div');
-        detailsScreen.id = 'invoice-details';
         detailsScreen.innerHTML = `
-            <button class="back-button" onclick="closeInvoiceDetails()">&#8592;</button>
             <h2>Invoice ${invoice.number}</h2>
             <p>Status: <span class="status-indicator status-${invoice.status}">${invoice.status}</span></p>
             <p>Date: ${new Date(invoice.date).toLocaleDateString()}</p>
@@ -281,7 +325,9 @@ function viewInvoiceDetails(id) {
             <button onclick="confirmDeleteInvoice(${invoice.id})" class="delete-button">Delete Invoice</button>
             <button onclick="previewInvoice(${invoice.id})" class="preview-button">Preview Invoice</button>
         `;
-        document.body.appendChild(detailsScreen);
+        document.getElementById('invoice-details-content').innerHTML = detailsScreen.innerHTML;
+        Telegram.WebApp.BackButton.show();
+        Telegram.WebApp.BackButton.onClick(closeInvoiceDetails);
     }
 }
 
@@ -297,11 +343,10 @@ function confirmDeleteInvoice(id) {
 }
 
 function closeInvoiceDetails() {
-    const detailsScreen = document.getElementById('invoice-details');
-    if (detailsScreen) {
-        detailsScreen.remove();
-    }
+    invoiceDetails.classList.add('hidden');
     mainScreen.classList.remove('hidden');
+    invoiceListScreen.classList.remove('hidden');
+    Telegram.WebApp.BackButton.hide();
 }
 
 function deleteInvoice(id) {
@@ -452,3 +497,26 @@ document.getElementById('logo-upload').addEventListener('change', (e) => {
 
 // Initialize the app
 authorizeUser();
+
+function closeForm() {
+    invoiceForm.classList.add('hidden');
+    mainScreen.classList.remove('hidden');
+    Telegram.WebApp.MainButton.hide();
+    Telegram.WebApp.BackButton.hide();
+}
+
+function changeInvoiceStatus(status) {
+    const invoiceId = parseInt(document.getElementById('invoice-details').dataset.invoiceId);
+    const invoice = invoices.find(inv => inv.id === invoiceId);
+    if (invoice) {
+        invoice.status = status;
+        saveInvoices();
+        renderInvoices();
+        viewInvoiceDetails(invoiceId);
+        Telegram.WebApp.showPopup({
+            title: 'Invoice Status Changed',
+            message: `The status of Invoice #${invoice.number} has been changed to ${status}.`,
+            buttons: [{type: 'ok'}]
+        });
+    }
+}

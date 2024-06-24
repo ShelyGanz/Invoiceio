@@ -30,11 +30,19 @@
                 <button id="create-invoice-button" class="button">Create New Invoice</button>
                 <button id="delete-all-invoices-button" class="button delete-all">Delete All Invoices</button>
             </div>
-            <div class="status-filter">
-                <button class="active" data-status="all">All</button>
-                <button data-status="unpaid">Unpaid</button>
-                <button data-status="draft">Draft</button>
+            <div class="invoice-summary">
+                <h3>Recent Invoices</h3>
+                <div id="invoice-summary-list"></div>
+                <button id="view-all-invoices-button" class="button hidden">View All</button>
+                <div id="no-invoices-message" class="hidden">
+                    <p>No recent invoices</p>
+                    <button id="create-invoice-link" class="button">Create Invoice</button>
+                </div>
             </div>
+        </div>
+        
+        <div id="invoice-list-screen" class="hidden">
+            <h2>All Invoices</h2>
             <table id="invoice-table">
                 <thead>
                     <tr>
@@ -49,7 +57,6 @@
         </div>
         
         <div id="invoice-form" class="hidden invoice-form">
-            <button id="back-button" class="back-button">&#8592;</button>
             <h2>Create New Invoice</h2>
             <form id="new-invoice-form">
                 <div class="form-group">
@@ -135,8 +142,17 @@
             </form>
         </div>
         
+        <div id="invoice-details" class="hidden invoice-details">
+            <h2>Invoice Details</h2>
+            <div id="invoice-details-content"></div>
+            <div class="invoice-status-buttons">
+                <button onclick="changeInvoiceStatus('draft')" class="button">Draft</button>
+                <button onclick="changeInvoiceStatus('sent')" class="button">Send</button>
+                <button onclick="changeInvoiceStatus('paid')" class="button">Paid</button>
+            </div>
+        </div>
+        
         <div id="settings-panel" class="hidden settings-panel">
-            <button id="settings-back-button" class="back-button">&#8592;</button>
             <h2>Settings</h2>
             <div class="form-group">
                 <label for="language">Language</label>
