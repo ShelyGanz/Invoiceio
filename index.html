@@ -95,6 +95,53 @@
             background-color: #F44336;
             color: white;
         }
+        .invoice-form {
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .logo-upload {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .items-table th {
+            background-color: #f2f2f2;
+        }
+        .add-item-btn, .add-discount-btn {
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -138,18 +185,91 @@
             </table>
         </div>
         
-        <div id="invoice-form" class="hidden">
-            <h2>Create Invoice</h2>
+        <div id="invoice-form" class="hidden invoice-form">
+            <h2>Create New Invoice</h2>
             <form id="new-invoice-form">
-                <input type="text" id="invoice-title" placeholder="Invoice Title" required>
-                <input type="text" id="invoice-customer" placeholder="Customer" required>
-                <input type="number" id="invoice-amount" placeholder="Amount" required>
-                <select id="invoice-status">
-                    <option value="draft">Draft</option>
-                    <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
-                </select>
-                <button type="submit" class="button">Save Invoice</button>
+                <div class="form-group">
+                    <label for="business-details">Business Details</label>
+                    <textarea id="business-details" rows="4" placeholder="Enter your business address and contact details"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-title">Invoice Title</label>
+                    <input type="text" id="invoice-title" placeholder="Invoice" required>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-summary">Summary</label>
+                    <input type="text" id="invoice-summary" placeholder="Summary (e.g. project name, description of invoice)">
+                </div>
+                <div class="form-group logo-upload">
+                    <label for="logo-upload">Logo</label>
+                    <div id="logo-upload-area">
+                        <p>Browse or drop your logo here</p>
+                        <p>Maximum 5MB in size. JPG, PNG, or GIF formats.</p>
+                        <p>Recommended size: 300 x 200 pixels.</p>
+                    </div>
+                    <input type="file" id="logo-upload" accept="image/*" style="display: none;">
+                </div>
+                <div class="form-group">
+                    <label for="invoice-number">Invoice Number</label>
+                    <input type="text" id="invoice-number" required>
+                </div>
+                <div class="form-group">
+                    <label for="po-number">P.O./S.O. Number</label>
+                    <input type="text" id="po-number">
+                </div>
+                <div class="form-group">
+                    <label for="invoice-date">Invoice Date</label>
+                    <input type="date" id="invoice-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="payment-due">Payment Due</label>
+                    <input type="date" id="payment-due" required>
+                </div>
+                <div class="form-group">
+                    <label for="customer-details">Customer Details</label>
+                    <textarea id="customer-details" rows="4" placeholder="Enter customer details"></textarea>
+                </div>
+                <h3>Items</h3>
+                <table id="items-table" class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="item-rows">
+                        <!-- Item rows will be added here dynamically -->
+                    </tbody>
+                </table>
+                <button type="button" id="add-item" class="add-item-btn">Add an item</button>
+                <div class="form-group">
+                    <label for="subtotal">Subtotal</label>
+                    <input type="text" id="subtotal" readonly>
+                </div>
+                <button type="button" id="add-discount" class="add-discount-btn">Add a discount</button>
+                <div class="form-group">
+                    <label for="total">Total</label>
+                    <input type="text" id="total" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="currency">Currency</label>
+                    <select id="currency">
+                        <option value="CAD">CAD ($) - Canadian dollar</option>
+                        <option value="USD">USD ($) - US dollar</option>
+                        <option value="EUR">EUR (€) - Euro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes / Terms</label>
+                    <textarea id="notes" rows="4" placeholder="Enter any additional notes or terms"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="footer">Footer</label>
+                    <textarea id="footer" rows="2" placeholder="Enter a footer for this invoice (e.g. tax information, thank you note)"></textarea>
+                </div>
+                <button type="submit" class="button">Save and continue</button>
             </form>
         </div>
     </div>
@@ -208,18 +328,31 @@
         createInvoiceButton.addEventListener('click', () => {
             mainScreen.classList.add('hidden');
             invoiceForm.classList.remove('hidden');
+            document.getElementById('invoice-number').value = invoices.length + 1;
+            document.getElementById('invoice-date').valueAsDate = new Date();
+            document.getElementById('payment-due').valueAsDate = new Date();
         });
 
+        // Handle new invoice form submission
         newInvoiceForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const newInvoice = {
                 id: Date.now(),
+                businessDetails: document.getElementById('business-details').value,
                 title: document.getElementById('invoice-title').value,
-                customer: document.getElementById('invoice-customer').value,
-                amount: parseFloat(document.getElementById('invoice-amount').value),
-                status: document.getElementById('invoice-status').value,
-                date: new Date().toISOString(),
-                number: invoices.length + 1
+                summary: document.getElementById('invoice-summary').value,
+                number: document.getElementById('invoice-number').value,
+                poNumber: document.getElementById('po-number').value,
+                date: document.getElementById('invoice-date').value,
+                paymentDue: document.getElementById('payment-due').value,
+                customerDetails: document.getElementById('customer-details').value,
+                items: getItemsFromTable(),
+                subtotal: document.getElementById('subtotal').value,
+                total: document.getElementById('total').value,
+                currency: document.getElementById('currency').value,
+                notes: document.getElementById('notes').value,
+                footer: document.getElementById('footer').value,
+                status: 'draft'
             };
             invoices.push(newInvoice);
             saveInvoices();
@@ -251,9 +384,9 @@
                         <td><span class="status-indicator status-${invoice.status}">${invoice.status}</span></td>
                         <td>${new Date(invoice.date).toLocaleDateString()}</td>
                         <td>${invoice.number}</td>
-                        <td>${invoice.customer}</td>
-                        <td>$${invoice.amount.toFixed(2)}</td>
-                        <td>$${invoice.status === 'paid' ? '0.00' : invoice.amount.toFixed(2)}</td>
+                        <td>${invoice.customerDetails.split('\n')[0]}</td>
+                        <td>${invoice.currency} ${invoice.total}</td>
+                        <td>${invoice.status === 'paid' ? '0.00' : invoice.total}</td>
                         <td>
                             <button onclick="viewInvoice(${invoice.id})" class="button">View</button>
                             <button onclick="editInvoice(${invoice.id})" class="button">Edit</button>
@@ -330,9 +463,9 @@
                 if (date >= startDate) {
                     const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
                     if (invoice.status === 'paid') {
-                        monthlyData[monthYear].inflow += invoice.amount;
+                        monthlyData[monthYear].inflow += parseFloat(invoice.total);
                     } else if (invoice.status === 'unpaid') {
-                        monthlyData[monthYear].outflow += invoice.amount;
+                        monthlyData[monthYear].outflow += parseFloat(invoice.total);
                     }
                 }
             });
@@ -345,20 +478,78 @@
         function viewInvoice(id) {
             const invoice = invoices.find(inv => inv.id === id);
             if (invoice) {
-                alert(`Invoice Details:\nTitle: ${invoice.title}\nCustomer: ${invoice.customer}\nAmount: $${invoice.amount}\nStatus: ${invoice.status}\nDate: ${new Date(invoice.date).toLocaleDateString()}`);
+                alert(`Invoice Details:\nTitle: ${invoice.title}\nCustomer: ${invoice.customerDetails}\nTotal: ${invoice.currency} ${invoice.total}\nStatus: ${invoice.status}\nDate: ${new Date(invoice.date).toLocaleDateString()}`);
             }
         }
 
         function editInvoice(id) {
             const invoice = invoices.find(inv => inv.id === id);
             if (invoice) {
+                document.getElementById('business-details').value = invoice.businessDetails;
                 document.getElementById('invoice-title').value = invoice.title;
-                document.getElementById('invoice-customer').value = invoice.customer;
-                document.getElementById('invoice-amount').value = invoice.amount;
-                document.getElementById('invoice-status').value = invoice.status;
+                document.getElementById('invoice-summary').value = invoice.summary;
+                document.getElementById('invoice-number').value = invoice.number;
+                document.getElementById('po-number').value = invoice.poNumber;
+                document.getElementById('invoice-date').value = invoice.date;
+                document.getElementById('payment-due').value = invoice.paymentDue;
+                document.getElementById('customer-details').value = invoice.customerDetails;
+                document.getElementById('subtotal').value = invoice.subtotal;
+                document.getElementById('total').value = invoice.total;
+                document.getElementById('currency').value = invoice.currency;
+                document.getElementById('notes').value = invoice.notes;
+                document.getElementById('footer').value = invoice.footer;
+
+                // Populate items table
+                const itemRows = document.getElementById('item-rows');
+                itemRows.innerHTML = '';
+                invoice.items.forEach(item => addItemRow(item));
+
                 mainScreen.classList.add('hidden');
                 invoiceForm.classList.remove('hidden');
-                // You might want to add logic here to update an existing invoice instead of creating a new one
+
+                // Change form submission behavior for editing
+                newInvoiceForm.onsubmit = (e) => {
+                    e.preventDefault();
+                    updateInvoice(id);
+                };
+            }
+        }
+
+        function updateInvoice(id) {
+            const updatedInvoice = {
+                id: id,
+                businessDetails: document.getElementById('business-details').value,
+                title: document.getElementById('invoice-title').value,
+                summary: document.getElementById('invoice-summary').value,
+                number: document.getElementById('invoice-number').value,
+                poNumber: document.getElementById('po-number').value,
+                date: document.getElementById('invoice-date').value,
+                paymentDue: document.getElementById('payment-due').value,
+                customerDetails: document.getElementById('customer-details').value,
+                items: getItemsFromTable(),
+                subtotal: document.getElementById('subtotal').value,
+                total: document.getElementById('total').value,
+                currency: document.getElementById('currency').value,
+                notes: document.getElementById('notes').value,
+                footer: document.getElementById('footer').value,
+                status: 'draft' // You might want to add a status field in the form
+            };
+
+            const index = invoices.findIndex(inv => inv.id === id);
+            if (index !== -1) {
+                invoices[index] = updatedInvoice;
+                saveInvoices();
+                renderInvoices();
+                updateCashFlowChart();
+                invoiceForm.classList.add('hidden');
+                mainScreen.classList.remove('hidden');
+                newInvoiceForm.reset();
+
+                // Reset form submission behavior
+                newInvoiceForm.onsubmit = (e) => {
+                    e.preventDefault();
+                    // Original new invoice creation logic
+                };
             }
         }
 
@@ -370,6 +561,56 @@
                 updateCashFlowChart();
             }
         }
+
+        function getItemsFromTable() {
+            const items = [];
+            const rows = document.querySelectorAll('#item-rows tr');
+            rows.forEach(row => {
+                items.push({
+                    description: row.querySelector('.item-description').value,
+                    quantity: row.querySelector('.item-quantity').value,
+                    price: row.querySelector('.item-price').value,
+                    amount: row.querySelector('.item-amount').value
+                });
+            });
+            return items;
+        }
+
+        function addItemRow(item = null) {
+            const tbody = document.getElementById('item-rows');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="text" class="item-description" value="${item ? item.description : ''}"></td>
+                <td><input type="number" class="item-quantity" value="${item ? item.quantity : '1'}"></td>
+                <td><input type="number" class="item-price" value="${item ? item.price : '0.00'}"></td>
+                <td><input type="number" class="item-amount" value="${item ? item.amount : '0.00'}" readonly></td>
+            `;
+            tbody.appendChild(newRow);
+            updateTotals();
+        }
+
+        function updateTotals() {
+            let subtotal = 0;
+            const rows = document.querySelectorAll('#item-rows tr');
+            rows.forEach(row => {
+                const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const amount = quantity * price;
+                row.querySelector('.item-amount').value = amount.toFixed(2);
+                subtotal += amount;
+            });
+            document.getElementById('subtotal').value = subtotal.toFixed(2);
+            document.getElementById('total').value = subtotal.toFixed(2);
+        }
+
+        // Event listeners
+        document.getElementById('add-item').addEventListener('click', () => addItemRow());
+
+        document.getElementById('items-table').addEventListener('input', (e) => {
+            if (e.target.classList.contains('item-quantity') || e.target.classList.contains('item-price')) {
+                updateTotals();
+            }
+        });
 
         statusFilters.forEach(button => {
             button.addEventListener('click', () => {
@@ -402,30 +643,26 @@
             alert(reportText);
         });
 
-        function downloadInvoice(invoiceId) {
-            const invoice = invoices.find(inv => inv.id === invoiceId);
-            if (!invoice) return;
+        // Logo upload functionality
+        document.getElementById('logo-upload-area').addEventListener('click', () => {
+            document.getElementById('logo-upload').click();
+        });
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.text(`Invoice: ${invoice.title}`, 20, 20);
-            doc.text(`Customer: ${invoice.customer}`, 20, 30);
-            doc.text(`Amount: $${invoice.amount.toFixed(2)}`, 20, 40);
-            doc.text(`Status: ${invoice.status}`, 20, 50);
-            doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`, 20, 60);
-            
-            doc.save(`invoice_${invoice.id}.pdf`);
-        }
-
-        function shareInvoice(invoiceId) {
-            const invoice = invoices.find(inv => inv.id === invoiceId);
-            if (!invoice) return;
-
-            const message = `Invoice: ${invoice.title}\nCustomer: ${invoice.customer}\nAmount: $${invoice.amount.toFixed(2)}\nStatus: ${invoice.status}\nDate: ${new Date(invoice.date).toLocaleDateString()}`;
-            
-            Telegram.WebApp.switchInlineQuery(message, ['users']);
-        }
+        document.getElementById('logo-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '200px';
+                    document.getElementById('logo-upload-area').innerHTML = '';
+                    document.getElementById('logo-upload-area').appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
 
         // Set up Telegram WebApp main button
         Telegram.WebApp.MainButton.setText('Close App');
