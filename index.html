@@ -281,11 +281,22 @@
                     <ul>
                         ${invoice.items.map(item => `<li>${item.description} - ${item.quantity} x ${item.price} = ${item.amount}</li>`).join('')}
                     </ul>
-                    <button onclick="deleteInvoice(${invoice.id})">Delete Invoice</button>
-                    <button onclick="previewInvoice(${invoice.id})">Preview Invoice</button>
+                    <button onclick="confirmDeleteInvoice(${invoice.id})" class="delete-button">Delete Invoice</button>
+                    <button onclick="previewInvoice(${invoice.id})" class="preview-button">Preview Invoice</button>
                 `;
                 document.body.appendChild(detailsScreen);
             }
+        }
+
+        function confirmDeleteInvoice(id) {
+            Telegram.WebApp.showConfirm(
+                "Are you sure you want to delete this invoice?",
+                (confirmed) => {
+                    if (confirmed) {
+                        deleteInvoice(id);
+                    }
+                }
+            );
         }
 
         function closeInvoiceDetails() {
@@ -297,13 +308,19 @@
         }
 
         function deleteInvoice(id) {
-            if (confirm('Are you sure you want to delete this invoice?')) {
-                invoices = invoices.filter(inv => inv.id !== id);
-                saveInvoices();
-                renderInvoices();
-                updateIncomeSummary();
-                closeInvoiceDetails();
-            }
+            invoices = invoices.filter(inv => inv.id !== id);
+            saveInvoices();
+            renderInvoices();
+            updateIncomeSummary();
+            closeInvoiceDetails();
+            mainScreen.classList.remove('hidden');
+            
+            // Show a notification that the invoice was deleted
+            Telegram.WebApp.showPopup({
+                title: 'Invoice Deleted',
+                message: 'The invoice has been successfully deleted.',
+                buttons: [{type: 'ok'}]
+            });
         }
 
         function previewInvoice(id) {
