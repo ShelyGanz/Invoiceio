@@ -37,7 +37,6 @@
                         <th>Date</th>
                         <th>Number</th>
                         <th>Total</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="invoice-list"></tbody>
@@ -250,14 +249,12 @@
             invoices.forEach(invoice => {
                 if (filter === 'all' || invoice.status === filter) {
                     const tr = document.createElement('tr');
+                    tr.addEventListener('click', () => viewInvoiceDetails(invoice.id));
                     tr.innerHTML = `
                         <td><span class="status-indicator status-${invoice.status}">${invoice.status}</span></td>
                         <td>${new Date(invoice.date).toLocaleDateString()}</td>
                         <td>${invoice.number}</td>
                         <td>${invoice.currency} ${invoice.total}</td>
-                        <td>
-                            <button onclick="viewInvoiceDetails(${invoice.id})" class="button">View</button>
-                        </td>
                     `;
                     invoiceList.appendChild(tr);
                 }
@@ -282,7 +279,7 @@
                     <ul>
                         ${invoice.items.map(item => `<li>${item.description} - ${item.quantity} x ${item.price} = ${item.amount}</li>`).join('')}
                     </ul>
-                    <button onclick="deleteInvoice(${invoice.id})" class="delete-button">Delete Invoice</button>
+                    <button onclick="confirmDeleteInvoice(${invoice.id})" class="delete-button">Delete Invoice</button>
                     <button onclick="previewInvoice(${invoice.id})" class="preview-button">Preview Invoice</button>
                 `;
                 document.body.appendChild(detailsScreen);
@@ -318,7 +315,6 @@
                         renderInvoices();
                         updateIncomeSummary();
                         closeInvoiceDetails();
-                        mainScreen.classList.remove('hidden');
                         
                         // Show a notification that the invoice was deleted
                         Telegram.WebApp.showPopup({
@@ -326,6 +322,7 @@
                             message: 'The invoice has been successfully deleted.',
                             buttons: [{type: 'ok'}]
                         });
+                        mainScreen.classList.remove('hidden');
                     }
                 }
             );
@@ -484,6 +481,15 @@
                 saveInvoices();
                 renderInvoices();
                 updateIncomeSummary();
+                closeInvoiceDetails();
+                mainScreen.classList.remove('hidden');
+                
+                // Show a notification that the invoice was deleted
+                Telegram.WebApp.showPopup({
+                    title: 'Invoice Deleted',
+                    message: 'The invoice has been successfully deleted.',
+                    buttons: [{type: 'ok'}]
+                });
             }
         }
 
