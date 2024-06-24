@@ -55,10 +55,8 @@
 </head>
 <body>
     <div class="container">
-        <div id="auth-screen">
-            <h1>Welcome to Invoice Manager</h1>
-            <p>Please authorize to continue.</p>
-            <button id="auth-button" class="button">Authorize</button>
+        <div id="loading-screen">
+            <h1>Loading...</h1>
         </div>
         
         <div id="main-screen" class="hidden">
@@ -92,11 +90,10 @@
         // Initialize Telegram WebApp
         Telegram.WebApp.ready();
 
-        const authScreen = document.getElementById('auth-screen');
+        const loadingScreen = document.getElementById('loading-screen');
         const mainScreen = document.getElementById('main-screen');
         const invoiceForm = document.getElementById('invoice-form');
         const userInfo = document.getElementById('user-info');
-        const authButton = document.getElementById('auth-button');
         const createInvoiceButton = document.getElementById('create-invoice-button');
         const newInvoiceForm = document.getElementById('new-invoice-form');
         const invoiceList = document.getElementById('invoice-list');
@@ -104,25 +101,35 @@
         let user = null;
         let invoices = [];
 
-        // User authorization
-        authButton.addEventListener('click', () => {
-            user = {
-                id: Telegram.WebApp.initDataUnsafe.user.id,
-                name: Telegram.WebApp.initDataUnsafe.user.first_name,
-                username: Telegram.WebApp.initDataUnsafe.user.username,
-                photo: Telegram.WebApp.initDataUnsafe.user.photo_url
-            };
-            
-            if (user.id) {
-                authScreen.classList.add('hidden');
-                mainScreen.classList.remove('hidden');
-                userInfo.innerHTML = `Welcome, ${user.name}!`;
-                loadInvoices();
-                updateCashFlowChart();
+        // Automatic user authorization
+        function authorizeUser() {
+            if (Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
+                user = {
+                    id: Telegram.WebApp.initDataUnsafe.user.id,
+                    name: Telegram.WebApp.initDataUnsafe.user.first_name,
+                    username: Telegram.WebApp.initDataUnsafe.user.username,
+                    photo: Telegram.WebApp.initDataUnsafe.user.photo_url
+                };
+                
+                if (user.id) {
+                    loadingScreen.classList.add('hidden');
+                    mainScreen.classList.remove('hidden');
+                    userInfo.innerHTML = `Welcome, ${user.name}!`;
+                    loadInvoices();
+                    updateCashFlowChart();
+                } else {
+                    alert('Authorization failed. Please try again.');
+                }
             } else {
-                alert('Authorization failed. Please try again.');
+                alert('Unable to retrieve user data. Please make sure you\'re opening this app from Telegram.');
             }
-        });
+        }
+
+        // Call authorize function when the app is ready
+        Telegram.WebApp.onEvent('mainButtonClicked', authorizeUser);
+        
+        // Automatically try to authorize when the page loads
+        window.addEventListener('load', authorizeUser);
 
         // Create new invoice
         createInvoiceButton.addEventListener('click', () => {
