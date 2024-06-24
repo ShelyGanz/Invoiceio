@@ -6,8 +6,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>Invoice Manager Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -34,11 +32,6 @@
         }
         .hidden {
             display: none;
-        }
-        #cashFlowChart {
-            width: 100%;
-            height: 200px;
-            margin: 10px 0;
         }
         .button {
             background-color: var(--tg-theme-button-color, #3390ec);
@@ -142,6 +135,21 @@
             margin-top: 8px;
             width: 100%;
         }
+        .income-summary {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .income-summary h3 {
+            margin-top: 0;
+            font-size: 16px;
+        }
+        .income-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #3390ec);
+        }
     </style>
 </head>
 <body>
@@ -154,13 +162,10 @@
             <h1>Invoice Manager</h1>
             <div id="user-info"></div>
             
-            <h2>Cash Flow</h2>
-            <div class="status-filter">
-                <button id="last-12-months" class="active">12 Months</button>
-                <button id="last-24-months">24 Months</button>
+            <div class="income-summary">
+                <h3>Total Income</h3>
+                <div id="total-income" class="income-value">$0.00</div>
             </div>
-            <canvas id="cashFlowChart"></canvas>
-            <button id="view-report" class="button">View Report</button>
             
             <h2>Invoices</h2>
             <div class="status-filter">
@@ -283,13 +288,9 @@
         const newInvoiceForm = document.getElementById('new-invoice-form');
         const invoiceList = document.getElementById('invoice-list');
         const statusFilters = document.querySelectorAll('.status-filter button');
-        const last12MonthsButton = document.getElementById('last-12-months');
-        const last24MonthsButton = document.getElementById('last-24-months');
 
         let user = null;
         let invoices = [];
-        let chartInstance = null;
-        let currentTimeRange = 12;
 
         // Automatic user authorization
         function authorizeUser() {
@@ -306,7 +307,7 @@
                     mainScreen.classList.remove('hidden');
                     userInfo.innerHTML = `Welcome, ${user.name}!`;
                     loadInvoices();
-                    updateCashFlowChart();
+                    updateIncomeSummary();
                 } else {
                     alert('Authorization failed. Please try again.');
                 }
@@ -354,7 +355,7 @@
             invoices.push(newInvoice);
             saveInvoices();
             renderInvoices();
-            updateCashFlowChart();
+            updateIncomeSummary();
             invoiceForm.classList.add('hidden');
             mainScreen.classList.remove('hidden');
             newInvoiceForm.reset();
@@ -389,81 +390,15 @@
                     invoiceList.appendChild(tr);
                 }
             });
+            updateIncomeSummary();
         }
 
-        function updateCashFlowChart() {
-            const ctx = document.getElementById('cashFlowChart').getContext('2d');
-            const monthlyData = getMonthlyData();
-
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: monthlyData.map(d => d.month.slice(0, 3)),  // Use abbreviated month names
-                    datasets: [
-                        {
-                            label: 'Inflow',
-                            data: monthlyData.map(d => d.inflow),
-                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Outflow',
-                            data: monthlyData.map(d => -d.outflow),
-                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: true },
-                        y: { 
-                            stacked: true,
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false  // Hide the legend to save space
-                        }
-                    }
-                }
-            });
-        }
-
-        function getMonthlyData() {
-            const monthlyData = {};
-            const today = new Date();
-            const startDate = new Date(today.getFullYear(), today.getMonth() - currentTimeRange, 1);
-
-            for (let d = startDate; d <= today; d.setMonth(d.getMonth() + 1)) {
-                const monthYear = `${d.getMonth() + 1}/${d.getFullYear()}`;
-                monthlyData[monthYear] = { inflow: 0, outflow: 0 };
-            }
-
-            invoices.forEach(invoice => {
-                const date = new Date(invoice.date);
-                if (date >= startDate) {
-                    const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-                    if (invoice.status === 'paid') {
-                        monthlyData[monthYear].inflow += parseFloat(invoice.total);
-                    } else if (invoice.status === 'unpaid') {
-                        monthlyData[monthYear].outflow += parseFloat(invoice.total);
-                    }
-                }
-            });
-
-            return Object.entries(monthlyData)
-                .map(([month, data]) => ({ month, ...data }))
-                .sort((a, b) => new Date(a.month) - new Date(b.month));
+        function updateIncomeSummary() {
+            const totalIncome = invoices
+                .filter(invoice => invoice.status === 'paid')
+                .reduce((sum, invoice) => sum + parseFloat(invoice.total), 0);
+            
+            document.getElementById('total-income').textContent = `$${totalIncome.toFixed(2)}`;
         }
 
         function viewInvoice(id) {
@@ -531,7 +466,7 @@
                 invoices[index] = updatedInvoice;
                 saveInvoices();
                 renderInvoices();
-                updateCashFlowChart();
+                updateIncomeSummary();
                 invoiceForm.classList.add('hidden');
                 mainScreen.classList.remove('hidden');
                 newInvoiceForm.reset();
@@ -561,7 +496,7 @@
                     invoices.push(newInvoice);
                     saveInvoices();
                     renderInvoices();
-                    updateCashFlowChart();
+                    updateIncomeSummary();
                     invoiceForm.classList.add('hidden');
                     mainScreen.classList.remove('hidden');
                     newInvoiceForm.reset();
@@ -574,7 +509,7 @@
                 invoices = invoices.filter(inv => inv.id !== id);
                 saveInvoices();
                 renderInvoices();
-                updateCashFlowChart();
+                updateIncomeSummary();
             }
         }
 
@@ -634,29 +569,6 @@
                 button.classList.add('active');
                 renderInvoices(button.dataset.status);
             });
-        });
-
-        last12MonthsButton.addEventListener('click', () => {
-            currentTimeRange = 12;
-            updateCashFlowChart();
-        });
-
-        last24MonthsButton.addEventListener('click', () => {
-            currentTimeRange = 24;
-            updateCashFlowChart();
-        });
-
-        document.getElementById('view-report').addEventListener('click', (e) => {
-            e.preventDefault();
-            const reportData = getMonthlyData();
-            let reportText = "Cash Flow Report\n\n";
-            reportData.forEach(month => {
-                reportText += `${month.month}:\n`;
-                reportText += `  Inflow: $${month.inflow.toFixed(2)}\n`;
-                reportText += `  Outflow: $${month.outflow.toFixed(2)}\n`;
-                reportText += `  Net Change: $${(month.inflow - month.outflow).toFixed(2)}\n\n`;
-            });
-            alert(reportText);
         });
 
         // Logo upload functionality
