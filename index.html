@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Invoice Manager Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: var(--tg-theme-button-color, #3390ec);
+        }
+        .hidden {
+            display: none;
+        }
+        #cashFlowChart {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .invoice-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .invoice-item {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .button {
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="auth-screen">
+            <h1>Welcome to Invoice Manager</h1>
+            <p>Please authorize to continue.</p>
+            <button id="auth-button" class="button">Authorize</button>
+        </div>
+        
+        <div id="main-screen" class="hidden">
+            <h1>Invoice Manager</h1>
+            <div id="user-info"></div>
+            
+            <h2>Cash Flow</h2>
+            <canvas id="cashFlowChart"></canvas>
+            
+            <h2>Invoices</h2>
+            <button id="create-invoice-button" class="button">Create New Invoice</button>
+            <ul id="invoice-list" class="invoice-list"></ul>
+        </div>
+        
+        <div id="invoice-form" class="hidden">
+            <h2>Create Invoice</h2>
+            <form id="new-invoice-form">
+                <input type="text" id="invoice-title" placeholder="Invoice Title" required>
+                <input type="number" id="invoice-amount" placeholder="Amount" required>
+                <select id="invoice-status">
+                    <option value="draft">Draft</option>
+                    <option value="sent">Sent</option>
+                    <option value="paid">Paid</option>
+                </select>
+                <button type="submit" class="button">Save Invoice</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        Telegram.WebApp.ready();
+
+        const authScreen = document.getElementById('auth-screen');
+        const mainScreen = document.getElementById('main-screen');
+        const invoiceForm = document.getElementById('invoice-form');
+        const userInfo = document.getElementById('user-info');
+        const authButton = document.getElementById('auth-button');
+        const createInvoiceButton = document.getElementById('create-invoice-button');
+        const newInvoiceForm = document.getElementById('new-invoice-form');
+        const invoiceList = document.getElementById('invoice-list');
+
+        let user = null;
+        let invoices = [];
+
+        // User authorization
+        authButton.addEventListener('click', () => {
+            user = {
+                id: Telegram.WebApp.initDataUnsafe.user.id,
+                name: Telegram.WebApp.initDataUnsafe.user.first_name,
+                username: Telegram.WebApp.initDataUnsafe.user.username,
+                photo: Telegram.WebApp.initDataUnsafe.user.photo_url
+            };
+            
+            if (user.id) {
+                authScreen.classList.add('hidden');
+                mainScreen.classList.remove('hidden');
+                userInfo.innerHTML = `Welcome, ${user.name}!`;
+                loadInvoices();
+                updateCashFlowChart();
+            } else {
+                alert('Authorization failed. Please try again.');
+            }
+        });
+
+        // Create new invoice
+        createInvoiceButton.addEventListener('click', () => {
+            mainScreen.classList.add('hidden');
+            invoiceForm.classList.remove('hidden');
+        });
+
+        newInvoiceForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newInvoice = {
+                id: Date.now(),
+                title: document.getElementById('invoice-title').value,
+                amount: parseFloat(document.getElementById('invoice-amount').value),
+                status: document.getElementById('invoice-status').value,
+                date: new Date().toISOString()
+            };
+            invoices.push(newInvoice);
+            saveInvoices();
+            renderInvoices();
+            updateCashFlowChart();
+            invoiceForm.classList.add('hidden');
+            mainScreen.classList.remove('hidden');
+            newInvoiceForm.reset();
+        });
+
+        function loadInvoices() {
+            const savedInvoices = localStorage.getItem(`invoices_${user.id}`);
+            if (savedInvoices) {
+                invoices = JSON.parse(savedInvoices);
+                renderInvoices();
+            }
+        }
+
+        function saveInvoices() {
+            localStorage.setItem(`invoices_${user.id}`, JSON.stringify(invoices));
+        }
+
+        function renderInvoices() {
+            invoiceList.innerHTML = '';
+            invoices.forEach(invoice => {
+                const li = document.createElement('li');
+                li.className = 'invoice-item';
+                li.innerHTML = `
+                    <h3>${invoice.title}</h3>
+                    <p>Amount: $${invoice.amount.toFixed(2)}</p>
+                    <p>Status: ${invoice.status}</p>
+                    <p>Date: ${new Date(invoice.date).toLocaleDateString()}</p>
+                    <button onclick="downloadInvoice(${invoice.id})" class="button">Download PDF</button>
+                    <button onclick="shareInvoice(${invoice.id})" class="button">Share on Telegram</button>
+                `;
+                invoiceList.appendChild(li);
+            });
+        }
+
+        function updateCashFlowChart() {
+            const ctx = document.getElementById('cashFlowChart').getContext('2d');
+            const monthlyData = getMonthlyData();
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(d => d.month),
+                    datasets: [{
+                        label: 'Cash Flow',
+                        data: monthlyData.map(d => d.total),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function getMonthlyData() {
+            const monthlyData = {};
+            invoices.forEach(invoice => {
+                const date = new Date(invoice.date);
+                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+                if (!monthlyData[monthYear]) {
+                    monthlyData[monthYear] = 0;
+                }
+                if (invoice.status === 'paid') {
+                    monthlyData[monthYear] += invoice.amount;
+                }
+            });
+            return Object.entries(monthlyData)
+                .map(([month, total]) => ({ month, total }))
+                .sort((a, b) => new Date(a.month) - new Date(b.month));
+        }
+
+        function downloadInvoice(invoiceId) {
+            const invoice = invoices.find(inv => inv.id === invoiceId);
+            if (!invoice) return;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.text(`Invoice: ${invoice.title}`, 20, 20);
+            doc.text(`Amount: $${invoice.amount.toFixed(2)}`, 20, 30);
+            doc.text(`Status: ${invoice.status}`, 20, 40);
+            doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`, 20, 50);
+            
+            doc.save(`invoice_${invoice.id}.pdf`);
+        }
+
+        function shareInvoice(invoiceId) {
+            const invoice = invoices.find(inv => inv.id === invoiceId);
+            if (!invoice) return;
+
+            const message = `Invoice: ${invoice.title}\nAmount: $${invoice.amount.toFixed(2)}\nStatus: ${invoice.status}\nDate: ${new Date(invoice.date).toLocaleDateString()}`;
+            
+            Telegram.WebApp.switchInlineQuery(message, ['users']);
+        }
+
+        // Set up Telegram WebApp main button
+        Telegram.WebApp.MainButton.setText('Close App');
+        Telegram.WebApp.MainButton.onClick(() => {
+            Telegram.WebApp.close();
+        });
+        Telegram.WebApp.MainButton.show();
+    </script>
+</body>
+</html>
