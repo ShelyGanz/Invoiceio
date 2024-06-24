@@ -30,6 +30,7 @@
                 <button data-status="draft">Draft</button>
             </div>
             <button id="create-invoice-button" class="button">Create New Invoice</button>
+            <button id="delete-all-invoices-button" class="button delete-all">Delete All Invoices</button>
             <table id="invoice-table">
                 <thead>
                     <tr>
@@ -186,6 +187,21 @@
             document.getElementById('invoice-number').value = invoices.length + 1;
             document.getElementById('invoice-date').valueAsDate = new Date();
             document.getElementById('payment-due').valueAsDate = new Date();
+        });
+
+        // Delete all invoices
+        deleteAllInvoicesButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete all invoices?')) {
+                invoices = [];
+                saveInvoices();
+                renderInvoices();
+                updateIncomeSummary();
+                Telegram.WebApp.showPopup({
+                    title: 'All Invoices Deleted',
+                    message: 'All invoices have been successfully deleted.',
+                    buttons: [{type: 'ok'}]
+                });
+            }
         });
 
         // Add event listener for back button
