@@ -255,13 +255,91 @@
                         <td>${invoice.number}</td>
                         <td>${invoice.currency} ${invoice.total}</td>
                         <td>
-                            <button onclick="viewInvoice(${invoice.id})" class="button">View</button>
+                            <button onclick="viewInvoiceDetails(${invoice.id})" class="button">View</button>
                         </td>
                     `;
                     invoiceList.appendChild(tr);
                 }
             });
             updateIncomeSummary();
+        }
+
+        function viewInvoiceDetails(id) {
+            const invoice = invoices.find(inv => inv.id === id);
+            if (invoice) {
+                mainScreen.classList.add('hidden');
+                const detailsScreen = document.createElement('div');
+                detailsScreen.id = 'invoice-details';
+                detailsScreen.innerHTML = `
+                    <button class="back-button" onclick="closeInvoiceDetails()">&#8592;</button>
+                    <h2>Invoice ${invoice.number}</h2>
+                    <p>Status: <span class="status-indicator status-${invoice.status}">${invoice.status}</span></p>
+                    <p>Date: ${new Date(invoice.date).toLocaleDateString()}</p>
+                    <p>Customer: ${invoice.customerDetails}</p>
+                    <p>Total: ${invoice.currency} ${invoice.total}</p>
+                    <h3>Items</h3>
+                    <ul>
+                        ${invoice.items.map(item => `<li>${item.description} - ${item.quantity} x ${item.price} = ${item.amount}</li>`).join('')}
+                    </ul>
+                    <button onclick="deleteInvoice(${invoice.id})">Delete Invoice</button>
+                    <button onclick="previewInvoice(${invoice.id})">Preview Invoice</button>
+                `;
+                document.body.appendChild(detailsScreen);
+            }
+        }
+
+        function closeInvoiceDetails() {
+            const detailsScreen = document.getElementById('invoice-details');
+            if (detailsScreen) {
+                detailsScreen.remove();
+            }
+            mainScreen.classList.remove('hidden');
+        }
+
+        function deleteInvoice(id) {
+            if (confirm('Are you sure you want to delete this invoice?')) {
+                invoices = invoices.filter(inv => inv.id !== id);
+                saveInvoices();
+                renderInvoices();
+                updateIncomeSummary();
+                closeInvoiceDetails();
+            }
+        }
+
+        function previewInvoice(id) {
+            const invoice = invoices.find(inv => inv.id === id);
+            if (invoice) {
+                const previewScreen = document.createElement('div');
+                previewScreen.id = 'invoice-preview';
+                previewScreen.innerHTML = `
+                    <button class="back-button" onclick="closePreview()">&#8592;</button>
+                    <h2>Invoice Preview</h2>
+                    <div class="preview-toggle">
+                        <button class="active" onclick="togglePreview('mobile')">Mobile</button>
+                        <button onclick="togglePreview('desktop')">Desktop</button>
+                    </div>
+                    <div class="preview-container">
+                        <img src="/api/placeholder/300/500" alt="Invoice Preview" id="preview-image">
+                    </div>
+                `;
+                document.body.appendChild(previewScreen);
+            }
+        }
+
+        function closePreview() {
+            const previewScreen = document.getElementById('invoice-preview');
+            if (previewScreen) {
+                previewScreen.remove();
+            }
+        }
+
+        function togglePreview(type) {
+            const buttons = document.querySelectorAll('.preview-toggle button');
+            buttons.forEach(button => button.classList.remove('active'));
+            event.target.classList.add('active');
+            // In a real implementation, you would update the preview image here
+            // For this example, we'll just use a placeholder
+            document.getElementById('preview-image').src = `/api/placeholder/${type === 'mobile' ? '300/500' : '600/800'}`;
         }
 
         function updateIncomeSummary() {
