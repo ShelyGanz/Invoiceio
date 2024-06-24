@@ -115,6 +115,12 @@ th, td {
     border-radius: 8px;
 }
 
+.settings-panel {
+    background-color: #2d2d2d;
+    padding: 20px;
+    border-radius: 8px;
+}
+
 .form-group {
     margin-bottom: 20px;
 }

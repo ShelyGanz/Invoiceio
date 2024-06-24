@@ -4,6 +4,7 @@ Telegram.WebApp.ready();
 const loadingScreen = document.getElementById('loading-screen');
 const mainScreen = document.getElementById('main-screen');
 const invoiceForm = document.getElementById('invoice-form');
+const settingsPanel = document.getElementById('settings-panel');
 const userInfo = document.getElementById('user-info');
 const createInvoiceButton = document.getElementById('create-invoice-button');
 const deleteAllInvoicesButton = document.getElementById('delete-all-invoices-button');
@@ -12,6 +13,9 @@ const invoiceList = document.getElementById('invoice-list');
 const statusFilters = document.querySelectorAll('.status-filter button');
 const backButton = document.getElementById('back-button');
 const addItemButton = document.getElementById('add-item');
+const settingsButton = document.getElementById('settings-button');
+const settingsBackButton = document.getElementById('settings-back-button');
+const saveSettingsButton = document.getElementById('save-settings-button');
 
 let user = null;
 let invoices = [];
@@ -71,6 +75,42 @@ deleteAllInvoicesButton.addEventListener('click', () => {
             buttons: [{type: 'ok'}]
         });
     }
+});
+
+// Show settings panel
+settingsButton.addEventListener('click', () => {
+    mainScreen.classList.add('hidden');
+    settingsPanel.classList.remove('hidden');
+});
+
+// Back from settings panel
+settingsBackButton.addEventListener('click', () => {
+    settingsPanel.classList.add('hidden');
+    mainScreen.classList.remove('hidden');
+});
+
+// Save settings
+saveSettingsButton.addEventListener('click', () => {
+    const language = document.getElementById('language').value;
+    const defaultCurrency = document.getElementById('default-currency').value;
+    const showBalances = document.getElementById('show-balances').checked;
+    
+    // Save settings to localStorage or send to server
+    const settings = {
+        language,
+        defaultCurrency,
+        showBalances
+    };
+    localStorage.setItem(`settings_${user.id}`, JSON.stringify(settings));
+    
+    settingsPanel.classList.add('hidden');
+    mainScreen.classList.remove('hidden');
+    
+    Telegram.WebApp.showPopup({
+        title: 'Settings Saved',
+        message: 'Your settings have been successfully saved.',
+        buttons: [{type: 'ok'}]
+    });
 });
 
 // Add event listener for back button
