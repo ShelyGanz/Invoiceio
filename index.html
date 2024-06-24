@@ -10,57 +10,61 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
+            font-size: 14px;
+            line-height: 1.5;
         }
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            max-width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
         }
-        h1, h2 {
-            color: var(--tg-theme-button-color, #3390ec);
+        h1 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        h2 {
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
         }
         .hidden {
             display: none;
         }
         #cashFlowChart {
             width: 100%;
-            max-width: 600px;
-            margin: 20px auto;
-        }
-        .invoice-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .invoice-item {
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            height: 200px;
             margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
         }
         .button {
             background-color: var(--tg-theme-button-color, #3390ec);
             color: var(--tg-theme-button-text-color, #ffffff);
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
             cursor: pointer;
-            margin: 5px;
+            margin: 5px 0;
+            width: 100%;
+            text-align: center;
         }
         .status-filter {
-            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
         }
         .status-filter button {
+            flex: 1;
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
             border: none;
-            padding: 10px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            margin-right: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin: 0 2px;
         }
         .status-filter button.active {
             background-color: var(--tg-theme-button-color, #3390ec);
@@ -69,65 +73,59 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 12px;
         }
         th, td {
             text-align: left;
-            padding: 8px;
+            padding: 6px;
             border-bottom: 1px solid var(--tg-theme-hint-color, #cccccc);
         }
         th {
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            font-weight: bold;
         }
         .status-indicator {
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-        }
-        .status-paid {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .status-draft {
-            background-color: #9E9E9E;
-            color: white;
-        }
-        .status-unpaid {
-            background-color: #F44336;
-            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
         }
         .invoice-form {
             background-color: var(--tg-theme-bg-color, #ffffff);
-            padding: 20px;
+            padding: 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             font-weight: bold;
+            font-size: 12px;
         }
         .form-group input, .form-group textarea, .form-group select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
         }
         .logo-upload {
             border: 2px dashed #ddd;
-            padding: 20px;
+            padding: 10px;
             text-align: center;
             cursor: pointer;
+            border-radius: 8px;
         }
         .items-table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 12px;
         }
         .items-table th, .items-table td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 6px;
             text-align: left;
         }
         .items-table th {
@@ -137,10 +135,12 @@
             background-color: var(--tg-theme-button-color, #3390ec);
             color: var(--tg-theme-button-text-color, #ffffff);
             border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 8px;
+            width: 100%;
         }
     </style>
 </head>
@@ -155,16 +155,16 @@
             <div id="user-info"></div>
             
             <h2>Cash Flow</h2>
-            <div>
-                <button id="last-12-months" class="button">Last 12 Months</button>
-                <button id="last-24-months" class="button">Last 24 Months</button>
+            <div class="status-filter">
+                <button id="last-12-months" class="active">12 Months</button>
+                <button id="last-24-months">24 Months</button>
             </div>
             <canvas id="cashFlowChart"></canvas>
-            <a href="#" id="view-report" class="button">View Report</a>
+            <button id="view-report" class="button">View Report</button>
             
             <h2>Invoices</h2>
             <div class="status-filter">
-                <button class="active" data-status="all">All Invoices</button>
+                <button class="active" data-status="all">All</button>
                 <button data-status="unpaid">Unpaid</button>
                 <button data-status="draft">Draft</button>
             </div>
@@ -175,9 +175,7 @@
                         <th>Status</th>
                         <th>Date</th>
                         <th>Number</th>
-                        <th>Customer</th>
                         <th>Total</th>
-                        <th>Amount due</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -190,7 +188,7 @@
             <form id="new-invoice-form">
                 <div class="form-group">
                     <label for="business-details">Business Details</label>
-                    <textarea id="business-details" rows="4" placeholder="Enter your business address and contact details"></textarea>
+                    <textarea id="business-details" rows="3" placeholder="Your business details"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="invoice-title">Invoice Title</label>
@@ -198,14 +196,13 @@
                 </div>
                 <div class="form-group">
                     <label for="invoice-summary">Summary</label>
-                    <input type="text" id="invoice-summary" placeholder="Summary (e.g. project name, description of invoice)">
+                    <input type="text" id="invoice-summary" placeholder="Invoice summary">
                 </div>
                 <div class="form-group logo-upload">
                     <label for="logo-upload">Logo</label>
                     <div id="logo-upload-area">
-                        <p>Browse or drop your logo here</p>
-                        <p>Maximum 5MB in size. JPG, PNG, or GIF formats.</p>
-                        <p>Recommended size: 300 x 200 pixels.</p>
+                        <p>Tap to upload logo</p>
+                        <p>Max 5MB (JPG, PNG, GIF)</p>
                     </div>
                     <input type="file" id="logo-upload" accept="image/*" style="display: none;">
                 </div>
@@ -227,14 +224,14 @@
                 </div>
                 <div class="form-group">
                     <label for="customer-details">Customer Details</label>
-                    <textarea id="customer-details" rows="4" placeholder="Enter customer details"></textarea>
+                    <textarea id="customer-details" rows="3" placeholder="Customer details"></textarea>
                 </div>
                 <h3>Items</h3>
                 <table id="items-table" class="items-table">
                     <thead>
                         <tr>
                             <th>Item</th>
-                            <th>Quantity</th>
+                            <th>Qty</th>
                             <th>Price</th>
                             <th>Amount</th>
                         </tr>
@@ -243,12 +240,12 @@
                         <!-- Item rows will be added here dynamically -->
                     </tbody>
                 </table>
-                <button type="button" id="add-item" class="add-item-btn">Add an item</button>
+                <button type="button" id="add-item" class="add-item-btn">Add Item</button>
                 <div class="form-group">
                     <label for="subtotal">Subtotal</label>
                     <input type="text" id="subtotal" readonly>
                 </div>
-                <button type="button" id="add-discount" class="add-discount-btn">Add a discount</button>
+                <button type="button" id="add-discount" class="add-discount-btn">Add Discount</button>
                 <div class="form-group">
                     <label for="total">Total</label>
                     <input type="text" id="total" readonly>
@@ -256,20 +253,20 @@
                 <div class="form-group">
                     <label for="currency">Currency</label>
                     <select id="currency">
-                        <option value="CAD">CAD ($) - Canadian dollar</option>
-                        <option value="USD">USD ($) - US dollar</option>
-                        <option value="EUR">EUR (€) - Euro</option>
+                        <option value="CAD">CAD ($)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="notes">Notes / Terms</label>
-                    <textarea id="notes" rows="4" placeholder="Enter any additional notes or terms"></textarea>
+                    <textarea id="notes" rows="3" placeholder="Additional notes or terms"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="footer">Footer</label>
-                    <textarea id="footer" rows="2" placeholder="Enter a footer for this invoice (e.g. tax information, thank you note)"></textarea>
+                    <textarea id="footer" rows="2" placeholder="Invoice footer"></textarea>
                 </div>
-                <button type="submit" class="button">Save and continue</button>
+                <button type="submit" class="button">Save Invoice</button>
             </form>
         </div>
     </div>
@@ -384,13 +381,9 @@
                         <td><span class="status-indicator status-${invoice.status}">${invoice.status}</span></td>
                         <td>${new Date(invoice.date).toLocaleDateString()}</td>
                         <td>${invoice.number}</td>
-                        <td>${invoice.customerDetails.split('\n')[0]}</td>
                         <td>${invoice.currency} ${invoice.total}</td>
-                        <td>${invoice.status === 'paid' ? '0.00' : invoice.total}</td>
                         <td>
                             <button onclick="viewInvoice(${invoice.id})" class="button">View</button>
-                            <button onclick="editInvoice(${invoice.id})" class="button">Edit</button>
-                            <button onclick="deleteInvoice(${invoice.id})" class="button">Delete</button>
                         </td>
                     `;
                     invoiceList.appendChild(tr);
@@ -409,7 +402,7 @@
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: monthlyData.map(d => d.month),
+                    labels: monthlyData.map(d => d.month.slice(0, 3)),  // Use abbreviated month names
                     datasets: [
                         {
                             label: 'Inflow',
@@ -424,24 +417,22 @@
                             backgroundColor: 'rgba(255, 99, 132, 0.6)',
                             borderColor: 'rgba(255, 99, 132, 1)',
                             borderWidth: 1
-                        },
-                        {
-                            label: 'Net Change',
-                            data: monthlyData.map(d => d.inflow - d.outflow),
-                            type: 'line',
-                            fill: false,
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            tension: 0.1
                         }
                     ]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         x: { stacked: true },
                         y: { 
                             stacked: true,
                             beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false  // Hide the legend to save space
                         }
                     }
                 }
@@ -549,6 +540,31 @@
                 newInvoiceForm.onsubmit = (e) => {
                     e.preventDefault();
                     // Original new invoice creation logic
+                    const newInvoice = {
+                        id: Date.now(),
+                        businessDetails: document.getElementById('business-details').value,
+                        title: document.getElementById('invoice-title').value,
+                        summary: document.getElementById('invoice-summary').value,
+                        number: document.getElementById('invoice-number').value,
+                        poNumber: document.getElementById('po-number').value,
+                        date: document.getElementById('invoice-date').value,
+                        paymentDue: document.getElementById('payment-due').value,
+                        customerDetails: document.getElementById('customer-details').value,
+                        items: getItemsFromTable(),
+                        subtotal: document.getElementById('subtotal').value,
+                        total: document.getElementById('total').value,
+                        currency: document.getElementById('currency').value,
+                        notes: document.getElementById('notes').value,
+                        footer: document.getElementById('footer').value,
+                        status: 'draft'
+                    };
+                    invoices.push(newInvoice);
+                    saveInvoices();
+                    renderInvoices();
+                    updateCashFlowChart();
+                    invoiceForm.classList.add('hidden');
+                    mainScreen.classList.remove('hidden');
+                    newInvoiceForm.reset();
                 };
             }
         }
