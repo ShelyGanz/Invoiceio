@@ -1,0 +1,178 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--tg-theme-bg-color, #ffffff);
+    color: var(--tg-theme-text-color, #000000);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+h1 {
+    font-size: 20px;
+    margin-bottom: 15px;
+}
+
+h2 {
+    font-size: 18px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+.button {
+    background-color: var(--tg-theme-button-color, #3390ec);
+    color: var(--tg-theme-button-text-color, #ffffff);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 5px 0;
+    width: 100%;
+    text-align: center;
+}
+
+.status-filter {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.status-filter button {
+    flex: 1;
+    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin: 0 2px;
+}
+
+.status-filter button.active {
+    background-color: var(--tg-theme-button-color, #3390ec);
+    color: var(--tg-theme-button-text-color, #ffffff);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+th, td {
+    text-align: left;
+    padding: 6px;
+    border-bottom: 1px solid var(--tg-theme-hint-color, #cccccc);
+}
+
+th {
+    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+    font-weight: bold;
+}
+
+.status-indicator {
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+}
+
+.invoice-form {
+    background-color: var(--tg-theme-bg-color, #ffffff);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.logo-upload {
+    border: 2px dashed #ddd;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.items-table th, .items-table td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: left;
+}
+
+.items-table th {
+    background-color: #f2f2f2;
+}
+
+.add-item-btn, .add-discount-btn {
+    background-color: var(--tg-theme-button-color, #3390ec);
+    color: var(--tg-theme-button-text-color, #ffffff);
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.income-summary {
+    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.income-summary h3 {
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.income-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--tg-theme-button-color, #3390ec);
+}
+
+.back-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--tg-theme-button-color, #3390ec);
+}
