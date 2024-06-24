@@ -51,6 +51,50 @@
             cursor: pointer;
             margin: 5px;
         }
+        .status-filter {
+            margin-bottom: 20px;
+        }
+        .status-filter button {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .status-filter button.active {
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid var(--tg-theme-hint-color, #cccccc);
+        }
+        th {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+        .status-indicator {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+        .status-paid {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .status-draft {
+            background-color: #9E9E9E;
+            color: white;
+        }
+        .status-unpaid {
+            background-color: #F44336;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -64,21 +108,45 @@
             <div id="user-info"></div>
             
             <h2>Cash Flow</h2>
+            <div>
+                <button id="last-12-months" class="button">Last 12 Months</button>
+                <button id="last-24-months" class="button">Last 24 Months</button>
+            </div>
             <canvas id="cashFlowChart"></canvas>
+            <a href="#" id="view-report" class="button">View Report</a>
             
             <h2>Invoices</h2>
+            <div class="status-filter">
+                <button class="active" data-status="all">All Invoices</button>
+                <button data-status="unpaid">Unpaid</button>
+                <button data-status="draft">Draft</button>
+            </div>
             <button id="create-invoice-button" class="button">Create New Invoice</button>
-            <ul id="invoice-list" class="invoice-list"></ul>
+            <table id="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Number</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Amount due</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="invoice-list"></tbody>
+            </table>
         </div>
         
         <div id="invoice-form" class="hidden">
             <h2>Create Invoice</h2>
             <form id="new-invoice-form">
                 <input type="text" id="invoice-title" placeholder="Invoice Title" required>
+                <input type="text" id="invoice-customer" placeholder="Customer" required>
                 <input type="number" id="invoice-amount" placeholder="Amount" required>
                 <select id="invoice-status">
                     <option value="draft">Draft</option>
-                    <option value="sent">Sent</option>
+                    <option value="unpaid">Unpaid</option>
                     <option value="paid">Paid</option>
                 </select>
                 <button type="submit" class="button">Save Invoice</button>
@@ -97,9 +165,14 @@
         const createInvoiceButton = document.getElementById('create-invoice-button');
         const newInvoiceForm = document.getElementById('new-invoice-form');
         const invoiceList = document.getElementById('invoice-list');
+        const statusFilters = document.querySelectorAll('.status-filter button');
+        const last12MonthsButton = document.getElementById('last-12-months');
+        const last24MonthsButton = document.getElementById('last-24-months');
 
         let user = null;
         let invoices = [];
+        let chartInstance = null;
+        let currentTimeRange = 12;
 
         // Automatic user authorization
         function authorizeUser() {
@@ -142,9 +215,11 @@
             const newInvoice = {
                 id: Date.now(),
                 title: document.getElementById('invoice-title').value,
+                customer: document.getElementById('invoice-customer').value,
                 amount: parseFloat(document.getElementById('invoice-amount').value),
                 status: document.getElementById('invoice-status').value,
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                number: invoices.length + 1
             };
             invoices.push(newInvoice);
             saveInvoices();
@@ -167,20 +242,26 @@
             localStorage.setItem(`invoices_${user.id}`, JSON.stringify(invoices));
         }
 
-        function renderInvoices() {
+        function renderInvoices(filter = 'all') {
             invoiceList.innerHTML = '';
             invoices.forEach(invoice => {
-                const li = document.createElement('li');
-                li.className = 'invoice-item';
-                li.innerHTML = `
-                    <h3>${invoice.title}</h3>
-                    <p>Amount: $${invoice.amount.toFixed(2)}</p>
-                    <p>Status: ${invoice.status}</p>
-                    <p>Date: ${new Date(invoice.date).toLocaleDateString()}</p>
-                    <button onclick="downloadInvoice(${invoice.id})" class="button">Download PDF</button>
-                    <button onclick="shareInvoice(${invoice.id})" class="button">Share on Telegram</button>
-                `;
-                invoiceList.appendChild(li);
+                if (filter === 'all' || invoice.status === filter) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="status-indicator status-${invoice.status}">${invoice.status}</span></td>
+                        <td>${new Date(invoice.date).toLocaleDateString()}</td>
+                        <td>${invoice.number}</td>
+                        <td>${invoice.customer}</td>
+                        <td>$${invoice.amount.toFixed(2)}</td>
+                        <td>$${invoice.status === 'paid' ? '0.00' : invoice.amount.toFixed(2)}</td>
+                        <td>
+                            <button onclick="viewInvoice(${invoice.id})" class="button">View</button>
+                            <button onclick="editInvoice(${invoice.id})" class="button">Edit</button>
+                            <button onclick="deleteInvoice(${invoice.id})" class="button">Delete</button>
+                        </td>
+                    `;
+                    invoiceList.appendChild(tr);
+                }
             });
         }
 
@@ -188,21 +269,45 @@
             const ctx = document.getElementById('cashFlowChart').getContext('2d');
             const monthlyData = getMonthlyData();
 
-            new Chart(ctx, {
-                type: 'line',
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
                 data: {
                     labels: monthlyData.map(d => d.month),
-                    datasets: [{
-                        label: 'Cash Flow',
-                        data: monthlyData.map(d => d.total),
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
+                    datasets: [
+                        {
+                            label: 'Inflow',
+                            data: monthlyData.map(d => d.inflow),
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Outflow',
+                            data: monthlyData.map(d => -d.outflow),
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Net Change',
+                            data: monthlyData.map(d => d.inflow - d.outflow),
+                            type: 'line',
+                            fill: false,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            tension: 0.1
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     scales: {
-                        y: {
+                        x: { stacked: true },
+                        y: { 
+                            stacked: true,
                             beginAtZero: true
                         }
                     }
@@ -212,20 +317,90 @@
 
         function getMonthlyData() {
             const monthlyData = {};
+            const today = new Date();
+            const startDate = new Date(today.getFullYear(), today.getMonth() - currentTimeRange, 1);
+
+            for (let d = startDate; d <= today; d.setMonth(d.getMonth() + 1)) {
+                const monthYear = `${d.getMonth() + 1}/${d.getFullYear()}`;
+                monthlyData[monthYear] = { inflow: 0, outflow: 0 };
+            }
+
             invoices.forEach(invoice => {
                 const date = new Date(invoice.date);
-                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-                if (!monthlyData[monthYear]) {
-                    monthlyData[monthYear] = 0;
-                }
-                if (invoice.status === 'paid') {
-                    monthlyData[monthYear] += invoice.amount;
+                if (date >= startDate) {
+                    const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+                    if (invoice.status === 'paid') {
+                        monthlyData[monthYear].inflow += invoice.amount;
+                    } else if (invoice.status === 'unpaid') {
+                        monthlyData[monthYear].outflow += invoice.amount;
+                    }
                 }
             });
+
             return Object.entries(monthlyData)
-                .map(([month, total]) => ({ month, total }))
+                .map(([month, data]) => ({ month, ...data }))
                 .sort((a, b) => new Date(a.month) - new Date(b.month));
         }
+
+        function viewInvoice(id) {
+            const invoice = invoices.find(inv => inv.id === id);
+            if (invoice) {
+                alert(`Invoice Details:\nTitle: ${invoice.title}\nCustomer: ${invoice.customer}\nAmount: $${invoice.amount}\nStatus: ${invoice.status}\nDate: ${new Date(invoice.date).toLocaleDateString()}`);
+            }
+        }
+
+        function editInvoice(id) {
+            const invoice = invoices.find(inv => inv.id === id);
+            if (invoice) {
+                document.getElementById('invoice-title').value = invoice.title;
+                document.getElementById('invoice-customer').value = invoice.customer;
+                document.getElementById('invoice-amount').value = invoice.amount;
+                document.getElementById('invoice-status').value = invoice.status;
+                mainScreen.classList.add('hidden');
+                invoiceForm.classList.remove('hidden');
+                // You might want to add logic here to update an existing invoice instead of creating a new one
+            }
+        }
+
+        function deleteInvoice(id) {
+            if (confirm('Are you sure you want to delete this invoice?')) {
+                invoices = invoices.filter(inv => inv.id !== id);
+                saveInvoices();
+                renderInvoices();
+                updateCashFlowChart();
+            }
+        }
+
+        statusFilters.forEach(button => {
+            button.addEventListener('click', () => {
+                statusFilters.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                renderInvoices(button.dataset.status);
+            });
+        });
+
+        last12MonthsButton.addEventListener('click', () => {
+            currentTimeRange = 12;
+            updateCashFlowChart();
+        });
+
+        last24MonthsButton.addEventListener('click', () => {
+            currentTimeRange = 24;
+            updateCashFlowChart();
+        });
+
+        document.getElementById('view-report').addEventListener('click', (e) => {
+            e.preventDefault();
+            const reportData = getMonthlyData();
+            let reportText = "Cash Flow Report\n\n";
+            reportData.forEach(month => {
+                reportText += `${month.month}:\n`;
+                reportText += `  Inflow: $${month.inflow.toFixed(2)}\n`;
+                reportText += `  Outflow: $${month.outflow.toFixed(2)}\n`;
+                reportText += `  Net Change: $${(month.inflow - month.outflow).toFixed(2)}\n\n`;
+            });
+            alert(reportText);
+        });
 
         function downloadInvoice(invoiceId) {
             const invoice = invoices.find(inv => inv.id === invoiceId);
@@ -235,9 +410,10 @@
             const doc = new jsPDF();
             
             doc.text(`Invoice: ${invoice.title}`, 20, 20);
-            doc.text(`Amount: $${invoice.amount.toFixed(2)}`, 20, 30);
-            doc.text(`Status: ${invoice.status}`, 20, 40);
-            doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`, 20, 50);
+            doc.text(`Customer: ${invoice.customer}`, 20, 30);
+            doc.text(`Amount: $${invoice.amount.toFixed(2)}`, 20, 40);
+            doc.text(`Status: ${invoice.status}`, 20, 50);
+            doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`, 20, 60);
             
             doc.save(`invoice_${invoice.id}.pdf`);
         }
@@ -246,7 +422,7 @@
             const invoice = invoices.find(inv => inv.id === invoiceId);
             if (!invoice) return;
 
-            const message = `Invoice: ${invoice.title}\nAmount: $${invoice.amount.toFixed(2)}\nStatus: ${invoice.status}\nDate: ${new Date(invoice.date).toLocaleDateString()}`;
+            const message = `Invoice: ${invoice.title}\nCustomer: ${invoice.customer}\nAmount: $${invoice.amount.toFixed(2)}\nStatus: ${invoice.status}\nDate: ${new Date(invoice.date).toLocaleDateString()}`;
             
             Telegram.WebApp.switchInlineQuery(message, ['users']);
         }
@@ -257,6 +433,9 @@
             Telegram.WebApp.close();
         });
         Telegram.WebApp.MainButton.show();
+
+        // Initialize the app
+        authorizeUser();
     </script>
 </body>
 </html>
